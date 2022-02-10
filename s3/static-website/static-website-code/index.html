@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <header>
+        <title>Venkatesh S3 Demo Site</title>
+    </header>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .column {
+            float: left;
+            width: 33.33%;
+            padding: 5px;
+        }
+
+        /* Clearfix (clear floats) */
+        .row::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+        /* Background Text Colors */
+		bg-txt-color-orange {
+			background-color:Orange;
+		}
+		bg-txt-color-lightgreen {
+			background-color:LightGreen;
+		}
+		bg-txt-color-violet {
+			background-color:Violet;
+		}		
+    </style>
+</head>
+
+<body>
+
+    <h2>
+        <center> AWS S3 static website hosting Demo - by Venkatesh </center>
+    </h2>
+    <p>
+        <center>Website is hosted using <b><bg-txt-color-lightgreen>AWS S3 Bucket</bg-txt-color-lightgreen></b></center>
+    </p>
+
+    <div class="row">
+        <div class="column">
+            <img src="img/img_snow.jpg" alt="Snow" style="width:100%">
+        </div>
+        <div class="column">
+            <img src="img/img_forest.jpg" alt="Forest" style="width:100%">
+        </div>
+        <div class="column">
+            <img src="img/img_mountains.jpg" alt="Mountains" style="width:100%">
+        </div>
+    </div>
+
+</body>
+
+</html>
