@@ -1,0 +1,20 @@
+Default user names for AMIs
+
+ec2-user
+	Amazon Linux AMIs
+	Amazon Linux 2 AMIs
+	RHEL AMIs
+	CentOS AMIs
+	SUSE AMIs
+
+ec2-user, or fedora
+	Fedora AMIs
+
+ubuntu
+	Ubuntu AMIs
+
+debian
+	Debian AMIs
+	
+Administrator
+	Windows
