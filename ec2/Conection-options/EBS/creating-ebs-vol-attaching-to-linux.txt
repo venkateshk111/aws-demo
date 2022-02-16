@@ -14,6 +14,7 @@ sudo cp /etc/fstab /etc/fstab.orig
 lsblk -f
 vi /etc/fstab
 add required entry
+	ex: UUID=d03f84fd-3295-47a9-abf6-046653b6e0f5     /datadisk   xfs    defaults,nofail   0   2
 close vi editor
 
 to verify
@@ -21,6 +22,12 @@ sudo umount /datadisk
 sudo mount -a 
 
 
+============================================
+/etc/fstab entry details:
+nofail: Do not report errors for this device if it does not exist.
+0: to prevent the file system from being dumped
+2: to indicate that it is a non-root device.
+============================================
 
 
 Example:
