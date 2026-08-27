@@ -1,0 +1,97 @@
+ATTACHING A NEW EBS VOLUME TO A LINUX EC2 INSTANCE
+
+
+STEP 0: CHECK CURRENT DISK LAYOUT
+
+Before attaching, check what's currently visible to the instance.
+
+df -h
+
+
+lsblk
+
+nvme1n1 is the new EBS volume - it is already attached at the instance
+level (from the AWS console) and visible to the OS, but has no filesystem
+and is not mounted yet.
+
+NOTE: On older, non-Nitro instances your new volume may instead show up as
+/dev/xvdf (or similar) rather than /dev/nvme1n1. If so, just substitute
+that device name in every command below. Run lsblk to confirm the actual name
+
+
+STEP 1: CONFIRM THE NEW DISK HAS NO FILESYSTEM
+
+sudo file -s /dev/nvme1n1
+
+- If it returns just "/dev/nvme1n1: data" (no filesystem type listed) - the
+  disk is blank and safe to format.
+- If it shows something like "ext4 filesystem data" - it already has data
+  on it. Don't format; skip to Step 3.
+
+
+STEP 2: CREATE A FILESYSTEM ON THE VOLUME
+
+Format the whole disk (not a partition, since there isn't one yet):
+
+sudo mkfs -t xfs /dev/nvme1n1
+
+XFS is the Amazon Linux default. Use ext4 instead if you prefer it:
+
+sudo mkfs -t ext4 /dev/nvme1n1
+
+
+STEP 3: CREATE A MOUNT POINT
+
+sudo mkdir /data
+
+Use whatever path makes sense for your use case (/mnt/data, /opt/appdata,
+etc.).
+
+
+STEP 4: MOUNT THE VOLUME
+
+sudo mount /dev/nvme1n1 /data
+
+Verify with:
+
+df -h
+
+You should now see /dev/nvme1n1 mounted at /data with about 2GB available.
+
+
+STEP 5: GET THE VOLUME'S UUID
+
+sudo blkid /dev/nvme1n1
+
+Copy the UUID value shown. Use this instead of the device name in the next
+step, since device names like /dev/nvme1n1 aren't guaranteed to stay
+consistent across reboots.
+
+
+STEP 6: MAKE THE MOUNT PERSIST ACROSS REBOOTS
+
+Back up fstab first:
+
+sudo cp /etc/fstab /etc/fstab.orig
+
+Edit it:
+
+sudo vi /etc/fstab
+
+Add a line like:
+
+UUID=xxxx-xxxx-xxxx  /data  xfs  defaults,nofail  0  2
+
+Use ext4 instead of xfs if that's what you formatted with. The nofail
+option is important - without it, if the volume is ever detached later,
+the instance could fail to boot.
+
+
+STEP 7: TEST THE FSTAB ENTRY BEFORE REBOOTING
+
+sudo umount /data
+sudo mount -a
+
+If it remounts cleanly with no errors, the fstab entry is correct and the
+volume will come back mounted after a reboot. If you get an error, fix the
+fstab line before rebooting.

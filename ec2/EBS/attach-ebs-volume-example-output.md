@@ -1,0 +1,124 @@
+# Example Output: Attaching a New EBS Volume to a Linux EC2 Instance
+
+This is a real terminal session showing the full process end to end.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ df -h
+Filesystem        Size  Used Avail Use% Mounted on
+devtmpfs          420M     0  420M   0% /dev
+tmpfs             457M     0  457M   0% /dev/shm
+tmpfs             183M  448K  183M   1% /run
+efivarfs          128K  2.7K  121K   3% /sys/firmware/efi/efivars
+/dev/nvme0n1p1    8.0G  1.8G  6.2G  22% /
+tmpfs             457M     0  457M   0% /tmp
+/dev/nvme0n1p128   10M  1.3M  8.7M  13% /boot/efi
+tmpfs              92M     0   92M   0% /run/user/1000
+
+[ec2-user@ip-172-31-40-189 ~]$ lsblk
+NAME          MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
+nvme0n1       259:0    0   8G  0 disk
+├─nvme0n1p1   259:1    0   8G  0 part /
+├─nvme0n1p127 259:2    0   1M  0 part
+└─nvme0n1p128 259:3    0  10M  0 part /boot/efi
+nvme1n1       259:4    0   2G  0 disk
+```
+
+New 2GB volume is visible as `nvme1n1`, not yet formatted or mounted.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo file -s /dev/nvme1n1
+/dev/nvme1n1: data
+```
+
+Confirms the disk is blank — safe to format.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo mkfs -t xfs /dev/nvme1n1
+meta-data=/dev/nvme1n1           isize=512    agcount=8, agsize=65536 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=1 inobtcount=1 nrext64=0
+         =                       exchange=0
+data     =                       bsize=4096   blocks=524288, imaxpct=25
+         =                       sunit=1      swidth=1 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=0
+log      =internal log           bsize=4096   blocks=16384, version=2
+         =                       sectsz=512   sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
+
+XFS filesystem created successfully.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo mkdir /data
+
+[ec2-user@ip-172-31-40-189 ~]$ sudo mount /dev/nvme1n1 /data
+
+[ec2-user@ip-172-31-40-189 ~]$ df -h
+Filesystem        Size  Used Avail Use% Mounted on
+devtmpfs          420M     0  420M   0% /dev
+tmpfs             457M     0  457M   0% /dev/shm
+tmpfs             183M  448K  183M   1% /run
+efivarfs          128K  2.7K  121K   3% /sys/firmware/efi/efivars
+/dev/nvme0n1p1    8.0G  1.8G  6.2G  22% /
+tmpfs             457M     0  457M   0% /tmp
+/dev/nvme0n1p128   10M  1.3M  8.7M  13% /boot/efi
+tmpfs              92M     0   92M   0% /run/user/1000
+/dev/nvme1n1      2.0G   47M  1.9G   3% /data
+```
+
+Volume is mounted at `/data` with ~1.9GB available.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo blkid /dev/nvme1n1
+/dev/nvme1n1: UUID="cbd0fd3a-c5ac-43f1-9dba-747ceb88f5d7" BLOCK_SIZE="512" TYPE="xfs"
+```
+
+UUID captured for use in `/etc/fstab`.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo cp /etc/fstab /etc/fstab.orig
+
+[ec2-user@ip-172-31-40-189 ~]$ sudo vi /etc/fstab
+```
+
+Added this line to `/etc/fstab`:
+
+```
+UUID=cbd0fd3a-c5ac-43f1-9dba-747ceb88f5d7  /data  xfs  defaults,nofail  0  2
+```
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo umount /data
+
+[ec2-user@ip-172-31-40-189 ~]$ df -h
+Filesystem        Size  Used Avail Use% Mounted on
+devtmpfs          420M     0  420M   0% /dev
+tmpfs             457M     0  457M   0% /dev/shm
+tmpfs             183M  452K  183M   1% /run
+efivarfs          128K  2.7K  121K   3% /sys/firmware/efi/efivars
+/dev/nvme0n1p1    8.0G  1.8G  6.2G  22% /
+tmpfs             457M     0  457M   0% /tmp
+/dev/nvme0n1p128   10M  1.3M  8.7M  13% /boot/efi
+tmpfs              92M     0   92M   0% /run/user/1000
+```
+
+Volume unmounted to test the fstab entry.
+
+```bash
+[ec2-user@ip-172-31-40-189 ~]$ sudo mount -a
+
+[ec2-user@ip-172-31-40-189 ~]$ df -h
+Filesystem        Size  Used Avail Use% Mounted on
+devtmpfs          420M     0  420M   0% /dev
+tmpfs             457M     0  457M   0% /dev/shm
+tmpfs             183M  452K  183M   1% /run
+efivarfs          128K  2.7K  121K   3% /sys/firmware/efi/efivars
+/dev/nvme0n1p1    8.0G  1.8G  6.2G  22% /
+tmpfs             457M     0  457M   0% /tmp
+/dev/nvme0n1p128   10M  1.3M  8.7M  13% /boot/efi
+tmpfs              92M     0   92M   0% /run/user/1000
+/dev/nvme1n1      2.0G   47M  1.9G   3% /data
+```
+
+`fstab` entry works — `mount -a` remounted the volume automatically at `/data`. This confirms it will come back mounted after a reboot.
