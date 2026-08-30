@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Update packages
+dnf update -y
+
+# Install Apache, OpenSSL and SSL module
+dnf install -y httpd openssl mod_ssl
+
+# Start and enable Apache
+systemctl enable httpd
+systemctl start httpd
+
+# Create simple webpage
+cat > /var/www/html/index.html <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Website</title>
+</head>
+<body>
+    <h1><center>Welcome to My Website</center></h1>
+    <h2><center>Learn. Build. Deploy.</center></h2>
+    <p><center>This is a simple website hosted on AWS.</center></p>
+</body>
+</html>
+EOF
+
+# Generate self-signed SSL certificate
+openssl req -x509 -nodes -days 365 \
+    -newkey rsa:2048 \
+    -keyout /etc/pki/tls/private/apache-selfsigned.key \
+    -out /etc/pki/tls/certs/apache-selfsigned.crt \
+    -subj "/C=IN/ST=Karnataka/L=Bangalore/O=AWS-Demo/CN=$(hostname -f)"
+
+# Configure Apache HTTPS
+cat > /etc/httpd/conf.d/ssl-demo.conf <<EOF
+<VirtualHost *:443>
+
+    ServerName $(hostname -f)
+
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /etc/pki/tls/certs/apache-selfsigned.crt
+    SSLCertificateKeyFile /etc/pki/tls/private/apache-selfsigned.key
+
+    <Directory /var/www/html>
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+</VirtualHost>
+EOF
+
+# Restart Apache
+systemctl restart httpd
