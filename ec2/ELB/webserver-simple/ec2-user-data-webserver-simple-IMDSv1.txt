@@ -1,0 +1,13 @@
+#!/bin/bash
+yum update -y
+yum install httpd -y
+systemctl start httpd
+systemctl enable httpd
+echo "<h1> <center> AWS EC2 Web Server Demo - by Venkatesh </center> </h1>" > /var/www/html/index.html
+echo "<h2> <center> Website is running on EC2 Instance </center> </h2>" >> /var/www/html/index.html
+echo "<h2> <center> EC2 Instance name : $(hostname -f)</center> </h2>" >> /var/www/html/index.html
+echo "<h2> <center> EC2 Instance Region : %ec2region% </center> </h2>" >> /var/www/html/index.html
+sed -i 's/%ec2region%/'$(curl -s http://169.254.169.254/latest/meta-data/placement/region)'/g' /var/www/html/index.html
+echo "<h2> <center> EC2 Instance AZ : %availability-zone% </center> </h2>" >> /var/www/html/index.html
+sed -i 's/%availability-zone%/'$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)'/g' /var/www/html/index.html
+echo "<h2> <center> EC2 Instance IP : $(hostname -I | awk '{print $1}')</center> </h2>" >> /var/www/html/index.html
