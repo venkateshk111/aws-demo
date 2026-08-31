@@ -1,5 +1,5 @@
 1. Create IAM Policy ***ec2-stop-start-iam-policy.json***  
-2. Create IAM Role and attach policy ***ec2-stop-start-iam-policy.json***  to IAM Role
+2. Create IAM Role and attach policy ***ec2-stop-start-iam-policy.json***  to IAM Role , trust policy should be lambda service
 3. Change Below details in the files ***startec2.py*** and ***stopec2.py*** according to your AWS region and your instance id
       ```
       region = 'us-west-1'
