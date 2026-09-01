@@ -2,9 +2,11 @@
 
 yum update -y
 yum install httpd -y
+
 systemctl start httpd
 systemctl enable httpd
 
+# Get EC2 Instance Metadata
 TOKEN=$(curl -s -X PUT \
   "http://169.254.169.254/latest/api/token" \
   -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -17,14 +19,260 @@ AZ=$(curl -s \
   -H "X-aws-ec2-metadata-token: $TOKEN" \
   "http://169.254.169.254/latest/meta-data/placement/availability-zone")
 
-echo "<h1><center>AWS EC2 Web Server Demo - by Venkatesh</center></h1>" > /var/www/html/index.html
+PRIVATE_IP=$(curl -s \
+  -H "X-aws-ec2-metadata-token: $TOKEN" \
+  "http://169.254.169.254/latest/meta-data/local-ipv4")
 
-echo "<h2><center>Website is running on EC2 Instance</center></h2>" >> /var/www/html/index.html
+HOSTNAME=$(hostname -f)
 
-echo "<h2><center>EC2 Instance name : $(hostname -f)</center></h2>" >> /var/www/html/index.html
+# Create Web Page
+cat > /var/www/html/index.html <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AWS Cloud Application</title>
 
-echo "<h2><center>EC2 Instance Region : $REGION</center></h2>" >> /var/www/html/index.html
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-echo "<h2><center>EC2 Instance AZ : $AZ</center></h2>" >> /var/www/html/index.html
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            color: #232f3e;
+        }
 
-echo "<h2><center>EC2 Instance IP : $(hostname -I | awk '{print $1}')</center></h2>" >> /var/www/html/index.html
+        .header {
+            background-color: #232f3e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 6px 0 0;
+            font-size: 15px;
+            color: #d5dbdb;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* APPLICATION SECTION */
+
+        .application {
+            background: white;
+            border-radius: 10px;
+            padding: 22px 25px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-top: 5px solid #ff9900;
+        }
+
+        .aws-icon {
+            font-size: 38px;
+            margin-bottom: 3px;
+        }
+
+        .application h2 {
+            margin: 3px 0 8px;
+            color: #232f3e;
+            font-size: 24px;
+        }
+
+        .application .intro {
+            font-size: 15px;
+            line-height: 1.4;
+            color: #4a5568;
+            margin: 0 auto 15px;
+            max-width: 700px;
+        }
+
+        .application-details {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .app-card {
+            background-color: #f4f6f8;
+            border-radius: 7px;
+            padding: 12px 20px;
+            min-width: 175px;
+        }
+
+        .app-card .icon {
+            font-size: 23px;
+            margin-bottom: 4px;
+        }
+
+        .app-card .title {
+            font-weight: bold;
+            color: #232f3e;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .app-card .value {
+            color: #5f6b7a;
+            font-size: 12px;
+        }
+
+        /* EC2 SECTION */
+
+        .infrastructure {
+            margin-top: 30px;
+            background: #232f3e;
+            color: white;
+            border-radius: 10px;
+            padding: 20px 25px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+
+        .infrastructure h2 {
+            margin: 0 0 5px;
+            color: #ff9900;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .infrastructure .description {
+            text-align: center;
+            color: #d5dbdb;
+            font-size: 13px;
+            margin: 0 0 15px;
+        }
+
+        .info {
+            background: #37475a;
+            border-radius: 7px;
+            padding: 11px 16px;
+            margin: 7px 0;
+            font-size: 15px;
+        }
+
+        .label {
+            color: #d5dbdb;
+            display: inline-block;
+            width: 210px;
+        }
+
+        .value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            text-align: center;
+            margin-top: 12px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>AWS Cloud Application</h1>
+        <p>A simple web application hosted in the AWS Cloud</p>
+    </div>
+
+    <div class="container">
+
+        <!-- APPLICATION SECTION -->
+
+        <div class="application">
+
+            <div class="aws-icon">☁️</div>
+
+            <h2>Welcome to the Application</h2>
+
+            <p class="intro">
+                This is a simple web application running in the
+                AWS Cloud. It demonstrates how an application can
+                be hosted on AWS infrastructure.
+            </p>
+
+            <div class="application-details">
+
+                <div class="app-card">
+                    <div class="icon">🌐</div>
+                    <div class="title">Web Application</div>
+                    <div class="value">Available to users</div>
+                </div>
+
+                <div class="app-card">
+                    <div class="icon">☁️</div>
+                    <div class="title">AWS Cloud</div>
+                    <div class="value">Hosted on AWS</div>
+                </div>
+
+                <div class="app-card">
+                    <div class="icon">👨‍💻</div>
+                    <div class="title">Application Owner</div>
+                    <div class="value">Venkatesh</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- EC2 SECTION -->
+
+        <div class="infrastructure">
+
+            <h2>⚙️ EC2 Information</h2>
+
+            <p class="description">
+                The information below comes directly from the
+                EC2 instance currently serving this webpage.
+            </p>
+
+            <div class="info">
+                <span class="label">EC2 Hostname:</span>
+                <span class="value">$HOSTNAME</span>
+            </div>
+
+            <div class="info">
+                <span class="label">Private IP Address:</span>
+                <span class="value">$PRIVATE_IP</span>
+            </div>
+
+            <div class="info">
+                <span class="label">AWS Region:</span>
+                <span class="value">$REGION</span>
+            </div>
+
+            <div class="info">
+                <span class="label">Availability Zone:</span>
+                <span class="value">$AZ</span>
+            </div>
+
+        </div>
+
+
+        <div class="footer">
+            AWS Training Demo
+        </div>
+
+    </div>
+
+</body>
+</html>
+EOF
